@@ -14,11 +14,7 @@ cd tcb
 ### Build
 
 ```bash
-mkdir build
-cd build
-
-cmake ..
-cmake --build .
+cmake -S . -B build && cmake --build build
 ```
 
 The resulting executable will be:

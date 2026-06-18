@@ -93,7 +93,6 @@ void daemon_write_pid_file(void) {
 }
 
 void daemon_init(void) {
-    LOG_INIT(LOG_FILE_PATH);
     LOG_INFO("Starting tcb daemon...");
 
     daemon_daemonize();

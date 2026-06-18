@@ -6,5 +6,6 @@
 
 void daemon_daemonize();
 void daemon_write_pid_file();
+void daemon_init();
 
 #endif // DAEMON_H

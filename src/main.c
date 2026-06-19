@@ -1,8 +1,5 @@
 /* main.c */
 #include "main.h"
-#include "daemon.h"
-#include "log.h"
-#include <stdlib.h>
 
 static void run_daemon(void) {
     while (1) {

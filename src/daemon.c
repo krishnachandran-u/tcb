@@ -1,16 +1,7 @@
 /* daemon.c */
 #include "main.h"
-#include "daemon.h"
-#include "log.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <errno.h>
+
+static char pid_file_path[STR_MAX_LEN];
 
 void daemon_daemonize(void) {
     pid_t pid;
@@ -60,9 +51,10 @@ void daemon_daemonize(void) {
 }
 
 void daemon_write_pid_file(void) {
-    int fd = open(PID_FILE_PATH, O_RDWR | O_CREAT, 0640);
+    snprintf(pid_file_path, STR_MAX_LEN, PID_FILE_PATH, getuid());
+    int fd = open(pid_file_path, O_RDWR | O_CREAT, 0640);
     if (fd < 0) {
-        LOG_FATAL("Failed to open PID file: %s", PID_FILE_PATH);
+        LOG_FATAL("Failed to open PID file: %s", pid_file_path);
     }
 
     struct flock fl;
@@ -99,5 +91,5 @@ void daemon_init(void) {
     LOG_INFO("Daemonization successful.");
 
     daemon_write_pid_file();
-    LOG_INFO("PID file created successfully at: %s", PID_FILE_PATH);
+    LOG_INFO("PID file created successfully at: %s", pid_file_path);
 }

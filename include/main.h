@@ -16,5 +16,6 @@
 
 #include "daemon.h"
 #include "log.h"
+#include "defines.h"
 
 #endif // MAIN_H

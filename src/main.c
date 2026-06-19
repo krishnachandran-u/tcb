@@ -1,8 +1,5 @@
 /* main.c */
 #include "main.h"
-#include "daemon.h"
-#include "log.h"
-#include <stdlib.h>
 
 static void run_daemon(void) {
     while (1) {
@@ -13,6 +10,7 @@ static void run_daemon(void) {
 
 int main(void) {
     LOG_INIT(LOG_FILE_PATH);
+    daemon_init();
     run_daemon();
     LOG_CLOSE(); 
     return EXIT_SUCCESS;

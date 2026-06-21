@@ -1,7 +1,38 @@
 /* socket.c */
 #include "main.h"
 
-#define MAX_EVENTS 64
+/*
+socket_init()
+    |
+    v
+Create UNIX socket
+Bind
+Listen
+Create epoll
+Register listen_fd
+    |
+    v
+Main Loop
+    |
+    v
+socket_process_events()
+    |
+    +--> epoll_wait()
+            |
+            +--> New connection?
+            |        |
+            |        +--> accept()
+            |        +--> add client to epoll
+            |
+            +--> Client data?
+                     |
+                     +--> handle_client_data()
+                              |
+                              +--> read header
+                              +--> read payload
+                              +--> process message
+                              +--> close client
+*/
 
 static int make_non_blocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -41,7 +72,7 @@ int socket_init(void) {
         LOG_FATAL("Failed to bind socket to path: %s", SOCKET_PATH);
     }
 
-    if (listen(listen_fd, 128) < 0) {
+    if (listen(listen_fd, SOCKET_MAX_CLIENTS) < 0) {
         close(listen_fd);
         LOG_FATAL("Socket listen configuration failed");
     }
@@ -133,9 +164,9 @@ static void handle_client_data(int client_fd) {
 }
 
 void socket_process_events(int epoll_fd, int listen_fd) {
-    struct epoll_event events[MAX_EVENTS];
+    struct epoll_event events[SOCKET_MAX_EVENTS];
     
-    int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+    int nfds = epoll_wait(epoll_fd, events, SOCKET_MAX_EVENTS, -1);
     if (nfds < 0) {
         if (errno == EINTR) return; 
         LOG_ERROR("epoll_wait loop failure encountered");

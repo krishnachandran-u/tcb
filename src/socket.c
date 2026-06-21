@@ -63,22 +63,29 @@ int socket_init(void) {
     }
 
     LOG_INFO("UNIX Socket initialized asynchronously at %s", SOCKET_PATH);
-    return epoll_fd; 
+    return epoll_fd;
 }
 
 static void handle_client_data(int client_fd) {
     protocol_msg_header_t header;
-    
-    ssize_t n_read = read(client_fd, &header, sizeof(protocol_msg_header_t));
-    if (n_read <= 0) {
-        close(client_fd);
-        return;
-    }
+    size_t header_bytes_read = 0;
 
-    if (n_read < (ssize_t)sizeof(protocol_msg_header_t)) {
-        LOG_WARN("Malformed packet header received. Dropping client connection.");
-        close(client_fd);
-        return;
+    while (header_bytes_read < sizeof(protocol_msg_header_t)) {
+        ssize_t n_read = read(client_fd, (char *)&header + header_bytes_read, sizeof(protocol_msg_header_t) - header_bytes_read);
+        if (n_read < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                close(client_fd);
+                return;
+            }
+            if (errno == EINTR) continue;
+            close(client_fd);
+            return;
+        }
+        if (n_read == 0) {
+            close(client_fd);
+            return;
+        }
+        header_bytes_read += n_read;
     }
 
     if (header.length > MAX_PAYLOAD_SIZE) {
@@ -87,28 +94,41 @@ static void handle_client_data(int client_fd) {
         return;
     }
 
-    char payload_buf[MAX_PAYLOAD_SIZE + 1];
-    memset(payload_buf, 0, sizeof(payload_buf));
+    char *payload_buf = malloc(header.length + 1);
+    if (!payload_buf) {
+        LOG_ERROR("Failed to allocate payload memory");
+        close(client_fd);
+        return;
+    }
+    memset(payload_buf, 0, header.length + 1);
 
     size_t total_bytes_read = 0;
     while (total_bytes_read < header.length) {
         ssize_t bytes = read(client_fd, payload_buf + total_bytes_read, header.length - total_bytes_read);
         if (bytes < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) continue; 
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                LOG_WARN("Read blocked prematurely. Connection dropped.");
+                break; 
+            }
             LOG_ERROR("Error reading payload from client descriptor");
-            close(client_fd);
-            return;
+            break;
         }
         if (bytes == 0) break; 
         total_bytes_read += bytes;
     }
 
-    if (header.type == MSG_CLIP_PUSH) {
-        LOG_INFO("[CLIP RECEIVED]: %s", payload_buf);
-    } else if (header.type == MSG_CLIP_QUERY) {
-        LOG_INFO("[QUERY INCOMING]: Client asked for clip array.");
+    if (total_bytes_read == header.length) {
+        if (header.type == MSG_CLIP_PUSH) {
+            LOG_INFO("[CLIP RECEIVED]: %s", payload_buf);
+        } else if (header.type == MSG_CLIP_QUERY) {
+            LOG_INFO("[QUERY INCOMING]: Client asked for clip array.");
+        }
+    } else {
+        LOG_WARN("Incomplete payload received from client.");
     }
 
+    free(payload_buf);
     close(client_fd);
 }
 
@@ -128,7 +148,7 @@ void socket_process_events(int epoll_fd, int listen_fd) {
                 int client_fd = accept(listen_fd, NULL, NULL);
                 if (client_fd < 0) {
                     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        break;
+                        break; 
                     }
                     LOG_ERROR("Failed to accept incoming connection request");
                     break;
@@ -140,7 +160,7 @@ void socket_process_events(int epoll_fd, int listen_fd) {
                 }
 
                 struct epoll_event ev;
-                ev.events = EPOLLIN | EPOLLET;
+                ev.events = EPOLLIN | EPOLLET; 
                 ev.data.fd = client_fd;
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &ev) < 0) {
                     LOG_ERROR("Failed to add client socket wrapper context to epoll infrastructure");

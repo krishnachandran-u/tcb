@@ -1,4 +1,4 @@
-/* log.c */
+/* src/tcb-daemon/log.c */
 #include "main.h"
 
 static FILE *log_fp = NULL;

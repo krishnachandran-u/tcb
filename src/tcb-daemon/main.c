@@ -1,4 +1,4 @@
-/* main.c */
+/* src/tcb-daemon/main.c */
 #include "main.h"
 
 static volatile sig_atomic_t keep_running = 1;
@@ -6,13 +6,6 @@ static volatile sig_atomic_t keep_running = 1;
 static void handle_signal(int sig) {
     (void)sig;
     keep_running = 0; 
-}
-
-static void run_daemon(void) {
-    while (keep_running) {
-        LOG_INFO("tcb daemon heartbeat pulse");
-        sleep(10); 
-    }
 }
 
 int main(void) {
@@ -27,9 +20,19 @@ int main(void) {
 
     daemon_init();
     
-    run_daemon();
+    int listen_fd = 3;
+    int epoll_fd = socket_init(&listen_fd);
+
+    LOG_INFO("tcb-daemon async engine armed. Waiting for clips...");
+    
+    while (keep_running) {
+        socket_process_events(epoll_fd, listen_fd); 
+    }
     
     LOG_INFO("Shutting down tcb daemon gracefully...");
+    close(epoll_fd);
+    close(listen_fd);
+    unlink(SOCKET_PATH);
     LOG_CLOSE(); 
     
     return EXIT_SUCCESS;

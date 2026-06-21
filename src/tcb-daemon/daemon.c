@@ -1,4 +1,4 @@
-/* daemon.c */
+/* src/tcb-daemon/daemon.c */
 #include "main.h"
 
 bool suppress_stderr;

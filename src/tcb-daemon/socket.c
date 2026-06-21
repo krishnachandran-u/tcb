@@ -1,4 +1,4 @@
-/* socket.c */
+/* src/tcb-daemon/socket.c */
 #include "main.h"
 
 /*
@@ -47,7 +47,7 @@ static int make_non_blocking(int fd) {
     return 0;
 }
 
-int socket_init(void) {
+int socket_init(int *out_listen_fd) {
     int listen_fd;
     struct sockaddr_un addr;
 
@@ -94,6 +94,7 @@ int socket_init(void) {
     }
 
     LOG_INFO("UNIX Socket initialized asynchronously at %s", SOCKET_PATH);
+    *out_listen_fd = listen_fd;
     return epoll_fd;
 }
 
@@ -151,6 +152,11 @@ static void handle_client_data(int client_fd) {
 
     if (total_bytes_read == header.length) {
         if (header.type == MSG_CLIP_PUSH) {
+            size_t len = strlen(payload_buf);
+            while (len > 0 && (payload_buf[len - 1] == '\n' || payload_buf[len - 1] == '\r')) {
+                payload_buf[len - 1] = '\0';
+                len--;
+            }
             LOG_INFO("[CLIP RECEIVED]: %s", payload_buf);
         } else if (header.type == MSG_CLIP_QUERY) {
             LOG_INFO("[QUERY INCOMING]: Client asked for clip array.");

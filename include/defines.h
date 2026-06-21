@@ -1,4 +1,4 @@
-/* defines.h */
+/* include/defines.h */
 #ifndef DEFINES_H
 #define DEFINES_H
 

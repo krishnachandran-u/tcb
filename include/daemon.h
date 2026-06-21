@@ -1,4 +1,4 @@
-/* daemon.h */
+/* include/daemon.h */
 #ifndef DAEMON_H
 #define DAEMON_H
 

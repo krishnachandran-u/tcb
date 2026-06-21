@@ -1,6 +1,7 @@
-/* daemon.c */
+/* src/tcb-daemon/daemon.c */
 #include "main.h"
 
+bool suppress_stderr;
 static char pid_file_path[STR_MAX_LEN];
 
 void daemon_daemonize(void) {
@@ -38,6 +39,8 @@ void daemon_daemonize(void) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+
+    suppress_stderr = true;
 
     int dev_null = open("/dev/null", O_RDWR);
     if (dev_null >= 0) {

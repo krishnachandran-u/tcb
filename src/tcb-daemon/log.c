@@ -1,7 +1,8 @@
-/* log.c */
+/* src/tcb-daemon/log.c */
 #include "main.h"
 
 static FILE *log_fp = NULL;
+extern bool suppress_stderr;
 
 static const char *level_to_string(log_level_t level)
 {
@@ -61,6 +62,9 @@ void _log_message(
     FILE *outputs[2] = { stderr, log_fp };
 
     for (size_t i = 0; i < 2; i++) {
+        if (i == 0 && suppress_stderr) {
+            continue;
+        }
         FILE *out = outputs[i];
 
         if (!out)

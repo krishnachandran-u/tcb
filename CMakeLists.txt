@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(tcb C)
 
 set(CMAKE_C_STANDARD 11)
+# set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-file(GLOB SRC_FILES
-    "${PROJECT_SOURCE_DIR}/src/*.c"
-)
+file(GLOB SRC_TCB_DAEMON_FILES "${PROJECT_SOURCE_DIR}/src/tcb-daemon/*.c")
+file(GLOB SRC_TCB_PUSH_FILES   "${PROJECT_SOURCE_DIR}/src/tcb-push/*.c")
 
-add_executable(tcb ${SRC_FILES})
+add_executable(tcb-daemon ${SRC_TCB_DAEMON_FILES})
+target_include_directories(tcb-daemon PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-target_include_directories(tcb PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
-)
+add_executable(tcb-push ${SRC_TCB_PUSH_FILES})
+target_include_directories(tcb-push PRIVATE ${PROJECT_SOURCE_DIR}/include)

@@ -16,9 +16,14 @@
 #include <stdarg.h>
 #include <time.h>
 #include <stdbool.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/epoll.h>
 
 #include "daemon.h"
 #include "log.h"
 #include "defines.h"
+#include "protocol.h"
+#include "socket.h"
 
 #endif // MAIN_H

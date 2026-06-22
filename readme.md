@@ -84,3 +84,9 @@ Fire your client data payload pipeline string down the wire:
 ```bash
 echo "If you don't answer the Tung Tung Tung Sahur call three times, you might just get a terrifying visit." | ./build/tcb-push
 ```
+
+Read the indexed items right out of your in-memory cache over the IPC loop:
+
+```bash
+./build/tcb-pull
+```

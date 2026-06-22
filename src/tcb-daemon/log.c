@@ -1,5 +1,5 @@
 /* src/tcb-daemon/log.c */
-#include "main.h"
+#include "tcb.h"
 
 static FILE *log_fp = NULL;
 extern bool suppress_stderr;

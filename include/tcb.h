@@ -1,6 +1,7 @@
-/* include/main.h */
-#ifndef MAIN_H
-#define MAIN_H
+/* include/tcb.h */
+/* Master header file for the TCB application */
+#ifndef TCB_H
+#define TCB_H
 
 #define _POSIX_C_SOURCE 200809L
 
@@ -20,10 +21,11 @@
 #include <sys/un.h>
 #include <sys/epoll.h>
 
+#include "core.h"
+
 #include "daemon.h"
 #include "log.h"
-#include "defines.h"
 #include "protocol.h"
 #include "socket.h"
-
-#endif // MAIN_H
+#include "storage.h"
+#endif // TCB_H

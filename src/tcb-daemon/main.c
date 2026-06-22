@@ -1,5 +1,5 @@
 /* src/tcb-daemon/main.c */
-#include "main.h"
+#include "tcb.h"
 
 static volatile sig_atomic_t keep_running = 1;
 
@@ -19,8 +19,10 @@ int main(void) {
     sigaction(SIGTERM, &sa, NULL);
 
     daemon_init();
+
+    storage_init();
     
-    int listen_fd = 3;
+    int listen_fd = -1;
     int epoll_fd = socket_init(&listen_fd);
 
     LOG_INFO("tcb-daemon async engine armed. Waiting for clips...");

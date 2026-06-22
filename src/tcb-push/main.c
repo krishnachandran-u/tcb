@@ -1,5 +1,5 @@
 /* src/tcb-push/main.c */
-#include "main.h"
+#include "tcb.h"
 
 int main(void) {
     char payload_buf[MAX_PAYLOAD_SIZE];

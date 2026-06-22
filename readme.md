@@ -46,6 +46,20 @@ Or without installing:
 
 ## Debug 
 
+Directory structure:
+
+```bash
+core.h
+└── all module headers
+
+tcb.h
+├── core.h
+└── all module headers
+
+*.c
+└── tcb.h
+```
+
 Check that the tcb-daemon is running:
 
 ```bash

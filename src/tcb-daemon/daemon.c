@@ -1,5 +1,5 @@
 /* src/tcb-daemon/daemon.c */
-#include "main.h"
+#include "tcb.h"
 
 bool suppress_stderr;
 static char pid_file_path[STR_MAX_LEN];

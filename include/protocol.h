@@ -2,7 +2,7 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#include <stdint.h>
+#include "core.h"
 
 #define SOCKET_PATH "/tmp/tcb.sock"
 #define MAX_PAYLOAD_SIZE 4096

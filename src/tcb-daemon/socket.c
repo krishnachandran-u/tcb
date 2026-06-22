@@ -1,5 +1,5 @@
 /* src/tcb-daemon/socket.c */
-#include "main.h"
+#include "tcb.h"
 
 /*
 socket_init()
@@ -157,9 +157,40 @@ static void handle_client_data(int client_fd) {
                 payload_buf[len - 1] = '\0';
                 len--;
             }
-            LOG_INFO("[CLIP RECEIVED]: %s", payload_buf);
+            storage_push(payload_buf, len);
+            LOG_INFO("[CLIP INDEXED]: %s (%zu bytes cached)", payload_buf, len);
         } else if (header.type == MSG_CLIP_QUERY) {
-            LOG_INFO("[QUERY INCOMING]: Client asked for clip array.");
+            LOG_INFO("[QUERY INCOMING]: Processing clipboard history request.");
+
+            clip_entry_t *entries = malloc(sizeof(clip_entry_t) * STORAGE_MAX_ENTRIES);
+            size_t count = 0;
+            storage_get_all(entries, &count);
+
+            uint32_t payload_size = 0;
+            for (size_t i = 0; i < count; i++) {
+                payload_size += sizeof(uint64_t) + sizeof(uint32_t) + entries[i].length;
+            }
+
+            protocol_msg_header_t resp_header = {
+                .type = MSG_CLIP_RESP,
+                .length = payload_size
+            };
+
+            if (write(client_fd, &resp_header, sizeof(protocol_msg_header_t)) < 0) {
+                LOG_ERROR("Failed to write query response header to client");
+                free(entries);
+                close(client_fd);
+                return;
+            }
+
+            for (size_t i = 0; i < count; i++) {
+                write(client_fd, &entries[i].timestamp, sizeof(uint64_t));
+                write(client_fd, &entries[i].length, sizeof(uint32_t));
+                write(client_fd, entries[i].data, entries[i].length);
+            }
+
+            LOG_INFO("[QUERY SUCCESSFUL]: Streamed %zu clips to client (%u bytes)", count, payload_size);
+            free(entries);
         }
     } else {
         LOG_WARN("Incomplete payload received from client.");

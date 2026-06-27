@@ -5,6 +5,80 @@ Blazing-fast, keyboard-driven terminal overlay to search and recall past clips.
 
 ## Build
 
+### Install dependencies
+
+Check your display protocol: 
+
+```bash
+echo $XDG_SESSION_TYPE
+```
+
+### For X11
+
+Debian/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install xclip libx11-dev libxfixes-dev
+```
+
+Fedora / RHEL / CentOS Stream / Rocky Linux / AlmaLinux:
+
+```bash
+sudo dnf install xclip libX11-devel libXfixes-devel
+```
+
+Arch Linux / Manjaro / EndeavourOS: 
+
+```bash
+sudo pacman -S xclip libx11 libxfixes
+```
+
+openSUSE:
+
+```bash
+sudo zypper install xclip libX11-devel libXfixes-devel
+```
+
+Alpine Linux:
+
+```bash
+sudo apk add xclip libx11-dev libxfixes-dev
+```
+
+### For Wayland
+
+Debian/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install wl-clipboard
+```
+
+Fedora / RHEL / CentOS Stream / Rocky Linux / AlmaLinux:
+
+```bash
+sudo dnf install wl-clipboard
+```
+
+Arch Linux / Manjaro / EndeavourOS:
+
+```bash
+sudo pacman -S wl-clipboard
+```
+
+openSUSE:
+
+```bash
+sudo zypper install wl-clipboard
+```
+
+Alpine Linux:
+
+```bash
+sudo apk add wl-clipboard
+```
+
 ### Clone the repository
 
 ```bash
@@ -15,6 +89,7 @@ cd tcb
 ### Build
 
 ```bash
+rm -rf build/
 cmake -S . -B build && cmake --build build
 ```
 
@@ -72,6 +147,11 @@ See tcb-daemon logs:
 cat /tmp/tcb.log
 ```
 
+See storage:
+```bash
+cat /tmp/tcb.db
+```
+
 Check that the socket file was actually generated: 
 
 ```bash
@@ -90,3 +170,12 @@ Read the indexed items right out of your in-memory cache over the IPC loop:
 ```bash
 ./build/tcb-pull
 ```
+
+## Third-party software
+
+This project includes the `clipnotify` utility by Christopher Down.
+
+Original repository:
+https://github.com/cdown/clipnotify
+
+The original `clipnotify` project is included in the `third_party/clipnotify` directory. See its `LICENSE` file for licensing information.

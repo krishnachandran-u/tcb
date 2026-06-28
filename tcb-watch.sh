@@ -17,7 +17,7 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
         exit 1
     fi
 
-    wl-paste --watch bash -c "wl-paste -n | \"$PUSH_BIN\""
+    wl-paste --primary=false --watch bash -c "wl-paste -n | \"$PUSH_BIN\""
 
 else
     echo "tcb: X11 environment detected. Using integrated tcb-clipnotify engine..."
@@ -33,7 +33,7 @@ else
         exit 1
     fi
 
-    while "$NOTIFY_BIN"; do
+    while "$NOTIFY_BIN" -s clipboard; do
         xclip -selection clipboard -o 2>/dev/null | "$PUSH_BIN"
     done
 fi

@@ -34,6 +34,12 @@ else
     fi
 
     while "$NOTIFY_BIN" -s clipboard; do
+        CLIP_TARGETS=$(xclip -selection clipboard -t TARGETS -o 2>/dev/null)
+
+        if echo "$CLIP_TARGETS" | grep -q "text/uri-list"; then
+            continue
+        fi
+
         xclip -selection clipboard -o 2>/dev/null | "$PUSH_BIN"
     done
 fi

@@ -25,3 +25,16 @@ target_include_directories(tcb-pull PRIVATE ${PROJECT_SOURCE_DIR}/include)
 add_executable(tcb-clipnotify "${PROJECT_SOURCE_DIR}/src/clipnotify/clipnotify.c")
 target_include_directories(tcb-clipnotify PRIVATE ${X11_INCLUDE_DIR})
 target_link_libraries(tcb-clipnotify PRIVATE PkgConfig::X11)
+
+include(GNUInstallDirs)
+
+install(TARGETS tcb-daemon tcb-push tcb-pull tcb-clipnotify
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(PROGRAMS tcb.sh 
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        RENAME tcb)
+
+install(PROGRAMS tcb-watch.sh 
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        RENAME tcb-watch)

@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 
-if [ "$1" != "--background" ]; then
-    nohup "$0" --background >/dev/null 2>&1 &
-    echo "tcb-watch: Detached and running in the background (PID: $!)."
-    exit 0
-fi
+PUSH_BIN="tcb-push"
+NOTIFY_BIN="tcb-clipnotify"
 
-PUSH_BIN="$(pwd)/build/tcb-push"
-NOTIFY_BIN="$(pwd)/build/tcb-clipnotify"
+tcb-daemon &
 
-if [ ! -f "$PUSH_BIN" ]; then
-    echo "Error: build/tcb-push missing. Please build the project."
+if ! command -v "$PUSH_BIN" &> /dev/null; then
+    echo "Error: $PUSH_BIN not found in PATH. Please run 'sudo make install'."
     exit 1
 fi
 
@@ -28,8 +24,9 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
 else
     echo "tcb: X11 environment detected. Using integrated tcb-clipnotify engine..."
     
-    if [ ! -f "$NOTIFY_BIN" ]; then
-        echo "Error: build/tcb-clipnotify missing."
+    # Verify that clipnotify is available globally
+    if ! command -v "$NOTIFY_BIN" &> /dev/null; then
+        echo "Error: $NOTIFY_BIN not found in PATH. Please run 'sudo make install'."
         exit 1
     fi
 

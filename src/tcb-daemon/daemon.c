@@ -4,6 +4,7 @@
 bool suppress_stderr;
 static char pid_file_path[STR_MAX_LEN];
 
+// unused function
 void daemon_daemonize(void) {
     pid_t pid;
 

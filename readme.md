@@ -79,45 +79,30 @@ Alpine Linux:
 sudo apk add wl-clipboard
 ```
 
-### Clone the repository
+### Install 
 
 ```bash
 git clone git@github.com:krishnachandran-u/tcb.git
 cd tcb
-```
-
-### Build
-
-```bash
-rm -rf build/
-cmake -S . -B build && cmake --build build
-```
-
-The resulting executable will be:
-
-```text
-build/tcb-daemon
-```
-
-### Install (optional)
-
-To make `tcb` available system-wide:
-
-```bash
-sudo install -m 755 build/tcb-daemon /usr/local/bin/tcb-daemon
+chmod +x install.sh
+./install.sh
 ```
 
 ### Run
 
 ```bash
-tcb-daemon
+tcb
 ```
 
-Or without installing:
+<!-- ```bash
+tcb-daemon
+``` -->
+
+<!-- Or without installing:
 
 ```bash
 ./build/tcb-daemon
-```
+``` -->
 
 ## Debug 
 

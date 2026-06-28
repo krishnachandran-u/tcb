@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-PUSH_BIN="$(pwd)/build/tcb-push"
-NOTIFY_BIN="$(pwd)/build/tcb-clipnotify"
+PUSH_BIN="tcb-push"
+NOTIFY_BIN="tcb-clipnotify"
 
-if [ ! -f "$PUSH_BIN" ]; then
-    echo "Error: build/tcb-push missing. Please build the project."
+tcb-daemon &
+
+if ! command -v "$PUSH_BIN" &> /dev/null; then
+    echo "Error: $PUSH_BIN not found in PATH. Please run 'sudo make install'."
     exit 1
 fi
 
@@ -17,13 +19,14 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
         exit 1
     fi
 
-    wl-paste --watch bash -c "wl-paste -n | \"$PUSH_BIN\""
+    wl-paste --primary=false --watch bash -c "wl-paste -n | \"$PUSH_BIN\""
 
 else
     echo "tcb: X11 environment detected. Using integrated tcb-clipnotify engine..."
     
-    if [ ! -f "$NOTIFY_BIN" ]; then
-        echo "Error: build/tcb-clipnotify missing."
+    # Verify that clipnotify is available globally
+    if ! command -v "$NOTIFY_BIN" &> /dev/null; then
+        echo "Error: $NOTIFY_BIN not found in PATH. Please run 'sudo make install'."
         exit 1
     fi
 
@@ -33,7 +36,13 @@ else
         exit 1
     fi
 
-    while "$NOTIFY_BIN"; do
+    while "$NOTIFY_BIN" -s clipboard; do
+        CLIP_TARGETS=$(xclip -selection clipboard -t TARGETS -o 2>/dev/null)
+
+        if echo "$CLIP_TARGETS" | grep -q "text/uri-list"; then
+            continue
+        fi
+
         xclip -selection clipboard -o 2>/dev/null | "$PUSH_BIN"
     done
 fi

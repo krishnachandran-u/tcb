@@ -18,7 +18,10 @@ int main(void) {
     sigaction(SIGINT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
-    daemon_init();
+    LOG_INFO("Starting tcb daemon in foreground...");
+
+    daemon_write_pid_file();
+    LOG_INFO("PID file managed successfully.");
 
     storage_init();
     

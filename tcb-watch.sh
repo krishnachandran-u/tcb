@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [ "$1" != "--background" ]; then
+    nohup "$0" --background >/dev/null 2>&1 &
+    echo "tcb-watch: Detached and running in the background (PID: $!)."
+    exit 0
+fi
+
 PUSH_BIN="$(pwd)/build/tcb-push"
 NOTIFY_BIN="$(pwd)/build/tcb-clipnotify"
 

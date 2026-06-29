@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 show_help() {
+
+BOLD="\033[1m"
+DIM="\033[2m"
+BLUE="\033[34m"
+RESET="\033[0m"
+
 printf '\e[35m'
 cat <<'EOF'
 
@@ -13,16 +19,19 @@ cat <<'EOF'
 
 EOF
 printf '%b' '\e[0m'
-    echo "Usage: tcb [start|stop|restart|status|logs|auto|sync]"
-    echo ""
-    echo "Commands:"
-    echo "  start           Start the core storage daemon engine"
-    echo "  stop            Stop all tcb infrastructure services"
-    echo "  restart         Restart all tcb infrastructure services"
-    echo "  status          Check the running health states of your infrastructure"
-    echo "  logs            Tail real-time operational messages"
-    echo "  auto [on|off]   Toggle automatic clipboard monitoring"
-    echo "  sync            Manually capture current clipboard content (alias: fire, f)"
+    echo -e "${BOLD}tcb${RESET}"
+    echo
+    echo -e "${BOLD}USAGE${RESET}"
+    echo "  tcb <command> [options]"
+    echo
+    echo -e "${BOLD}COMMANDS${RESET}"
+    printf "  ${BLUE}%-15s${RESET} %s\n" "start"   "Start the core storage daemon."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "stop"    "Stop all tcb services."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "restart" "Restart all tcb services."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "status"  "Show service health."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "logs"    "Follow live logs."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "auto[on|off]"    "Toggle clipboard monitoring."
+    printf "  ${BLUE}%-15s${RESET} %s\n" "sync"    "Capture clipboard (aliases: fire, f)."
     exit 1
 }
 
@@ -33,18 +42,18 @@ fi
 case "$1" in
     start)
         systemctl --user start tcb
-        echo "TCB Core Storage Daemon started."
+        echo "tcb Core Storage Daemon started."
         ;;
     stop)
         systemctl --user stop tcb-watch tcb 2>/dev/null || true
-        echo "All TCB services stopped."
+        echo "All tcb services stopped."
         ;;
     restart)
         systemctl --user restart tcb
         if systemctl --user is-active --quiet tcb-watch; then
             systemctl --user restart tcb-watch
         fi
-        echo "TCB infrastructure restarted."
+        echo "tcb infrastructure restarted."
         ;;
     status)
         echo "=== Core Storage Daemon ==="

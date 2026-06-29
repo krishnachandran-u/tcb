@@ -159,6 +159,14 @@ Read the indexed items right out of your in-memory cache over the IPC loop:
 ./build/tcb-pull
 ```
 
+See the sqlite db:
+
+```bash
+sudo apt install sqlite3
+sudo apt install sqlitebrowser
+```
+
+
 ## Third-party software
 
 This project includes the `clipnotify` utility by Christopher Down.

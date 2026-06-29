@@ -1,16 +1,12 @@
-/* storage.h */
+/* include/storage.h */
 #ifndef STORAGE_H
 #define STORAGE_H
 
 #include "core.h" 
 
 #define STORAGE_MAX_ENTRIES 500
-#define STORAGE_FILE_PATH "/tmp/tcb.db"
 
-typedef struct __attribute__((packed)) {
-    uint64_t timestamp;
-    uint32_t length;
-} storage_file_header_t;
+#define STORAGE_FILE_PATH "%s/.tcb.db"
 
 typedef struct {
     uint64_t timestamp;

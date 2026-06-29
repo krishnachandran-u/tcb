@@ -1,108 +1,123 @@
 /* src/tcb-daemon/storage.c */
 #include "tcb.h"
 
-static clip_entry_t ring_buffer[STORAGE_MAX_ENTRIES];
-static size_t ring_head = 0; 
-static size_t ring_count = 0; 
-
-static void free_entry(clip_entry_t *entry) {
-    if (entry->data) {
-        free(entry->data);
-        entry->data = NULL;
-    }
-    entry->length = 0;
-    entry->timestamp = 0;
-}
-
-static void ring_push_mem(const char *data, size_t len, uint64_t timestamp) {
-    free_entry(&ring_buffer[ring_head]);
-
-    ring_buffer[ring_head].data = malloc(len + 1);
-    if (!ring_buffer[ring_head].data) {
-        LOG_ERROR("Failed to allocate memory for ring buffer entry");
-        return;
-    }
-
-    memcpy(ring_buffer[ring_head].data, data, len);
-    ring_buffer[ring_head].data[len] = '\0';
-    ring_buffer[ring_head].length = (uint32_t)len;
-    ring_buffer[ring_head].timestamp = timestamp;
-
-    ring_head = (ring_head + 1) % STORAGE_MAX_ENTRIES;
-    if (ring_count < STORAGE_MAX_ENTRIES) {
-        ring_count++;
-    }
-}
+static sqlite3 *db = NULL;
 
 void storage_init(void) {
-    memset(ring_buffer, 0, sizeof(ring_buffer));
+    char db_path[512];
+    const char *home = getenv("HOME");
+    
+    if (home) {
+        snprintf(db_path, sizeof(db_path), "%s/.tcb.db", home);
+    } else {
+        snprintf(db_path, sizeof(db_path), "./.tcb.db");
+    }
 
-    FILE *fp = fopen(STORAGE_FILE_PATH, "rb");
-    if (!fp) {
-        LOG_INFO("No existing clip database file found at %s. Creating new on push.", STORAGE_FILE_PATH);
+    int rc = sqlite3_open(db_path, &db);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("Cannot open SQLite database: %s", sqlite3_errmsg(db));
         return;
     }
 
-    LOG_INFO("Loading past history clips from persistent storage database...");
-    
-    storage_file_header_t header;
-    char load_buf[MAX_PAYLOAD_SIZE + 1];
+    const char *sql_create_table = 
+        "CREATE TABLE IF NOT EXISTS clipboard_history ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "hash TEXT UNIQUE NOT NULL,"
+        "content TEXT NOT NULL,"
+        "length INTEGER NOT NULL,"
+        "timestamp INTEGER NOT NULL"
+        ");"
+        "CREATE INDEX IF NOT EXISTS idx_timestamp ON clipboard_history(timestamp DESC);";
 
-    while (fread(&header, sizeof(storage_file_header_t), 1, fp) == 1) {
-        if (header.length > MAX_PAYLOAD_SIZE) {
-            LOG_ERROR("Database file corruption or upper limit sizing error detected. Aborting read.");
-            break;
-        }
-
-        if (fread(load_buf, 1, header.length, fp) != header.length) {
-            LOG_ERROR("Incomplete block chunk data read hit. Database truncated?");
-            break;
-        }
-
-        load_buf[header.length] = '\0';
-        ring_push_mem(load_buf, header.length, header.timestamp);
+    char *err_msg = NULL;
+    rc = sqlite3_exec(db, sql_create_table, NULL, 0, &err_msg);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("SQL error creating structural tables: %s", err_msg);
+        sqlite3_free(err_msg);
+        return;
     }
 
-    fclose(fp);
-    LOG_INFO("Successfully restored %zu clip records into active memory cache context.", ring_count);
+    LOG_INFO("Successfully initialized SQL persistence engine at %s", db_path);
 }
 
 void storage_push(const char *data, size_t len) {
-    if (len == 0 || len > MAX_PAYLOAD_SIZE) return;
+    if (len == 0 || len > MAX_PAYLOAD_SIZE || !db) return;
 
     uint64_t now = (uint64_t)time(NULL);
+    
+    char hash_str[17];
+    uint64_t hash = calculate_fnv1a(data, len);
+    sprintf(hash_str, "%016llx", (unsigned long long)hash);
 
-    FILE *fp = fopen(STORAGE_FILE_PATH, "ab");
-    if (!fp) {
-        LOG_ERROR("Unable to open storage flat file for appending data log context");
-    } else {
-        storage_file_header_t header = { .timestamp = now, .length = (uint32_t)len };
-        if (fwrite(&header, sizeof(storage_file_header_t), 1, fp) != 1 ||
-            fwrite(data, 1, len, fp) != len) {
-            LOG_ERROR("Failed to flush payload transaction records to disk block storage maps");
-        }
-        fclose(fp);
+    const char *sql_insert = 
+        "INSERT INTO clipboard_history (hash, content, length, timestamp) "
+        "VALUES (?, ?, ?, ?) "
+        "ON CONFLICT(hash) DO UPDATE SET timestamp = excluded.timestamp;";
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("Failed to prepare insertion statement: %s", sqlite3_errmsg(db));
+        return;
     }
 
-    ring_push_mem(data, len, now);
+    sqlite3_bind_text(stmt, 1, hash_str, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, data, len, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 3, (int)len);
+    sqlite3_bind_int64(stmt, 4, (int64_t)now);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        LOG_ERROR("Failed to execute database write transaction: %s", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
+
+    char sql_cleanup[128];
+    sprintf(sql_cleanup, 
+            "DELETE FROM clipboard_history WHERE id NOT IN "
+            "(SELECT id FROM clipboard_history ORDER BY timestamp DESC LIMIT %d);", 
+            STORAGE_MAX_ENTRIES);
+    
+    sqlite3_exec(db, sql_cleanup, NULL, 0, NULL);
 }
 
 void storage_get_all(clip_entry_t *out_buffer, size_t *out_count) {
-    *out_count = ring_count;
-    if (ring_count == 0) return;
+    *out_count = 0;
+    if (!db) return;
 
-    size_t start_idx = (ring_count == STORAGE_MAX_ENTRIES) ? ring_head : 0;
-
-    for (size_t i = 0; i < ring_count; i++) {
-        size_t current_ring_pos = (start_idx + i) % STORAGE_MAX_ENTRIES;
-        out_buffer[i] = ring_buffer[current_ring_pos];
+    const char *sql_select = "SELECT content, length, timestamp FROM clipboard_history ORDER BY timestamp DESC;";
+    
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_select, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("Failed to prepare retrieval query: %s", sqlite3_errmsg(db));
+        return;
     }
+
+    size_t idx = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW && idx < STORAGE_MAX_ENTRIES) {
+        const char *content = (const char *)sqlite3_column_text(stmt, 0);
+        int length = sqlite3_column_int(stmt, 1);
+        uint64_t timestamp = (uint64_t)sqlite3_column_int64(stmt, 2);
+
+        out_buffer[idx].data = malloc(length + 1);
+        if (out_buffer[idx].data) {
+            memcpy(out_buffer[idx].data, content, length);
+            out_buffer[idx].data[length] = '\0';
+            out_buffer[idx].length = length;
+            out_buffer[idx].timestamp = timestamp;
+            idx++;
+        }
+    }
+
+    *out_count = idx;
+    sqlite3_finalize(stmt);
 }
 
 void storage_free(void) {
-    for (size_t i = 0; i < STORAGE_MAX_ENTRIES; i++) {
-        free_entry(&ring_buffer[i]);
+    if (db) {
+        sqlite3_close(db);
+        db = NULL;
     }
-    ring_count = 0;
-    ring_head = 0;
 }

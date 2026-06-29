@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/epoll.h>
+#include <sqlite3.h>
 
 #include "core.h"
 
@@ -28,4 +29,5 @@
 #include "protocol.h"
 #include "socket.h"
 #include "storage.h"
+#include "helper.h"
 #endif // TCB_H

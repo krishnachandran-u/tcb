@@ -1,21 +1,17 @@
 [Unit]
-Description=TCB Clipboard Sync Daemon
+Description=TCB Core Clipboard Storage Engine
 After=graphical-session.target
 
 [Service]
 Type=simple
 
-# Force clean up old socket or PID files if they were left behind by a bad crash
+# Clean up old sockets/PIDs left behind by crashes
 ExecStartPre=/usr/bin/bash -c 'rm -f /tmp/tcb.sock /tmp/tcb.pid'
 
-# Run the watch script
-ExecStart=/usr/local/bin/tcb-watch
-
-# Kill ALL processes in the control group on stop (daemon, watch, clipnotify)
-KillMode=control-group
+# Start ONLY the core daemon backend
+ExecStart=/usr/local/bin/tcb-daemon
 
 Restart=on-failure
-# Add a 1-second delay before restarting to prevent the "repeated too quickly" loop
 RestartSec=1s
 
 [Install]

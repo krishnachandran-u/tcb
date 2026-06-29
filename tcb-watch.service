@@ -1,0 +1,16 @@
+[Unit]
+Description=TCB Automatic Clipboard Watcher Hook
+After=graphical-session.target tcb.service
+Requires=tcb.service
+
+[Service]
+Type=simple
+
+# Run the watch script which hooks into X11/Wayland selection engines
+ExecStart=/usr/local/bin/tcb-watch
+
+Restart=on-failure
+RestartSec=1s
+
+[Install]
+WantedBy=graphical-session.target

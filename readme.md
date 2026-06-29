@@ -13,6 +13,8 @@ Check your display protocol:
 echo $XDG_SESSION_TYPE
 ```
 
+Currently tested properly only for X11 Ubuntu 22.04
+
 ### For X11
 
 Debian/Ubuntu:
@@ -20,6 +22,7 @@ Debian/Ubuntu:
 ```bash
 sudo apt update
 sudo apt install xclip libx11-dev libxfixes-dev
+sudo apt install libsqlite3-dev
 ```
 
 Fedora / RHEL / CentOS Stream / Rocky Linux / AlmaLinux:

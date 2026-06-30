@@ -3,6 +3,7 @@
 
 Blazing-fast, keyboard-driven terminal overlay to search and recall past clips.
 
+<a href="https://ibb.co/PGT5P95S"><img src="https://i.ibb.co/HTNrbxrJ/Screenshot-from-2026-06-30-16-07-31.png" alt="Screenshot-from-2026-06-30-16-07-31" border="0"></a>
 ## Build
 
 ### Install dependencies
@@ -23,6 +24,7 @@ Debian/Ubuntu:
 sudo apt update
 sudo apt install xclip libx11-dev libxfixes-dev
 sudo apt install libsqlite3-dev
+sudo apt install fzf
 ```
 
 Fedora / RHEL / CentOS Stream / Rocky Linux / AlmaLinux:
